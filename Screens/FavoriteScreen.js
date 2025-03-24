@@ -10,12 +10,17 @@ import {
     RefreshControl,
     Animated,
     Dimensions,
+    StatusBar,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { Ionicons, MaterialIcons } from "react-native-vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import useNotification from "../hooks/useNotification";
 
-const API_URL =
-    process.env.EXPO_PUBLIC_API_URL || "https://bookshelf-be.onrender.com";
+const { width, height } = Dimensions.get('window');
+const COLUMN_WIDTH = (width - 40) / 2; // Account for margins
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "https://bookshelf-be.onrender.com";
 
 function FavoriteScreen({ navigation }) {
     const [favoriteBooks, setFavoriteBooks] = useState([]);
@@ -23,10 +28,10 @@ function FavoriteScreen({ navigation }) {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
     const scaleAnim = new Animated.Value(1);
+    const { showNotification, NotificationComponent } = useNotification();
 
     const fetchFavoriteBooks = async () => {
         try {
-            // Get favorite book IDs from AsyncStorage
             const favorites = await AsyncStorage.getItem("favorites");
             const favoriteIds = favorites ? JSON.parse(favorites) : [];
 
@@ -45,6 +50,12 @@ function FavoriteScreen({ navigation }) {
             setFavoriteBooks(books);
         } catch (err) {
             setError("Không thể tải danh sách sách yêu thích");
+            showNotification({
+                title: "Lỗi",
+                message: "Không thể tải danh sách sách yêu thích",
+                type: "error",
+                duration: 3000
+            });
             console.error("Error fetching favorite books:", err);
         } finally {
             setLoading(false);
@@ -56,29 +67,49 @@ function FavoriteScreen({ navigation }) {
         fetchFavoriteBooks();
     }, []);
 
+    useEffect(() => {
+        // Refetch favorites when the screen is focused
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchFavoriteBooks();
+        });
+
+        return unsubscribe;
+    }, [navigation]);
+
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         fetchFavoriteBooks();
     }, []);
 
-    const removeFavorite = async (bookId) => {
+    const removeFavorite = async (bookId, bookName) => {
         try {
             const favorites = await AsyncStorage.getItem("favorites");
             let favoritesArray = favorites ? JSON.parse(favorites) : [];
             favoritesArray = favoritesArray.filter((id) => id !== bookId);
             await AsyncStorage.setItem("favorites", JSON.stringify(favoritesArray));
 
-            // Update the UI
             setFavoriteBooks((prevBooks) =>
                 prevBooks.filter((book) => book._id !== bookId)
             );
+
+            showNotification({
+                title: "Đã xóa",
+                message: `"${bookName}" đã được xóa khỏi danh sách yêu thích`,
+                type: "success",
+                duration: 2000
+            });
         } catch (err) {
             console.error("Error removing favorite:", err);
+            showNotification({
+                title: "Lỗi",
+                message: "Không thể xóa sách khỏi danh sách yêu thích",
+                type: "error",
+                duration: 3000
+            });
         }
     };
 
     const handleBookPress = (bookId) => {
-        // Scale down animation
         Animated.sequence([
             Animated.timing(scaleAnim, {
                 toValue: 0.95,
@@ -93,28 +124,44 @@ function FavoriteScreen({ navigation }) {
         ]).start(() => {
             navigation.navigate("Chi tiết", {
                 bookID: bookId,
-                fromFavorite: true, // Add flag to indicate navigation source
+                fromFavorite: true,
             });
         });
     };
 
-    const renderBookItem = ({ item }) => (
+    const renderBookItem = ({ item, index }) => (
         <Animated.View
-            style={[styles.bookCard, { transform: [{ scale: scaleAnim }] }]}
+            style={[
+                styles.bookCard,
+                {
+                    transform: [{ scale: scaleAnim }],
+                    marginLeft: index % 2 === 0 ? 0 : 8,
+                    marginRight: index % 2 === 0 ? 8 : 0
+                }
+            ]}
         >
+            <LinearGradient
+                colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0.05)']}
+                style={styles.cardGradient}
+            />
+
             <TouchableOpacity
                 style={styles.removeButton}
-                onPress={() => removeFavorite(item._id)}
+                onPress={() => removeFavorite(item._id, item.bookName)}
             >
-                <Icon name="times-circle" size={24} color="#FF6B6B" />
+                <Ionicons name="heart-dislike" size={20} color="#FF5E5E" />
             </TouchableOpacity>
 
             <TouchableOpacity
                 onPress={() => handleBookPress(item._id)}
-                activeOpacity={0.7}
+                activeOpacity={0.8}
+                style={styles.bookContent}
             >
-                {/* Book Image */}
                 <View style={styles.imageContainer}>
+                    <LinearGradient
+                        colors={['rgba(33, 31, 36, 0.9)', 'rgba(33, 31, 36, 0.6)']}
+                        style={styles.imageGradient}
+                    />
                     {Array.isArray(item.image) && item.image.length > 0 ? (
                         <Image
                             source={{ uri: item.image[0] }}
@@ -135,24 +182,55 @@ function FavoriteScreen({ navigation }) {
                     )}
                 </View>
 
-                {/* Book Info */}
                 <View style={styles.bookInfo}>
                     <Text style={styles.bookTitle} numberOfLines={2}>
                         {item.bookName}
                     </Text>
                     <Text style={styles.bookAuthor} numberOfLines={1}>
-                        {item.actorID?.actorName || "Chưa xác định"}
+                        <Ionicons name="person-outline" size={12} color="#D4AF37" /> {item.actorID?.actorName || "Chưa xác định"}
                     </Text>
+
+                    <View style={styles.bookMetaContainer}>
+                        <View style={styles.metaItem}>
+                            <Ionicons name="star" size={12} color="#D4AF37" />
+                            <Text style={styles.metaText}>
+                                {item.rating ? item.rating.toFixed(1) : "N/A"}
+                            </Text>
+                        </View>
+
+                        <View style={styles.metaItem}>
+                            <Ionicons name="book-outline" size={12} color="#D4AF37" />
+                            <Text style={styles.metaText}>
+                                {item.pageCount || "N/A"}
+                            </Text>
+                        </View>
+                    </View>
                 </View>
             </TouchableOpacity>
         </Animated.View>
     );
 
+    const renderHeader = () => (
+        <View style={styles.headerSection}>
+            <Text style={styles.sectionTitle}>Sách yêu thích của bạn</Text>
+            <Text style={styles.sectionSubtitle}>
+                {favoriteBooks.length > 0
+                    ? `${favoriteBooks.length} cuốn sách trong bộ sưu tập`
+                    : "Thêm sách yêu thích vào bộ sưu tập của bạn"}
+            </Text>
+        </View>
+    );
+
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator size="large" color="#FFD700" />
-                <Text style={styles.loadingText}>Đang tải...</Text>
+                <StatusBar barStyle="light-content" />
+                <LinearGradient
+                    colors={['rgba(212, 175, 55, 0.3)', 'rgba(212, 175, 55, 0.1)', 'rgba(22, 20, 25, 0)']}
+                    style={styles.topDecoration}
+                />
+                <ActivityIndicator size="large" color="#D4AF37" />
+                <Text style={styles.loadingText}>Đang tải sách yêu thích...</Text>
             </View>
         );
     }
@@ -160,33 +238,89 @@ function FavoriteScreen({ navigation }) {
     if (error) {
         return (
             <View style={styles.center}>
+                <StatusBar barStyle="light-content" />
+                <NotificationComponent />
+                <LinearGradient
+                    colors={['rgba(212, 175, 55, 0.3)', 'rgba(212, 175, 55, 0.1)', 'rgba(22, 20, 25, 0)']}
+                    style={styles.topDecoration}
+                />
+                <MaterialIcons name="error-outline" size={60} color="#FF5E5E" />
                 <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={fetchFavoriteBooks}
+                >
+                    <Text style={styles.retryButtonText}>Thử lại</Text>
+                </TouchableOpacity>
             </View>
         );
     }
 
     if (favoriteBooks.length === 0) {
         return (
-            <View style={styles.center}>
-                <Icon name="heart-o" size={50} color="#5A4032" />
-                <Text style={styles.emptyText}>Chưa có sách yêu thích</Text>
+            <View style={styles.container}>
+                <StatusBar barStyle="light-content" />
+                <NotificationComponent />
+                <LinearGradient
+                    colors={['rgba(212, 175, 55, 0.3)', 'rgba(212, 175, 55, 0.1)', 'rgba(22, 20, 25, 0)']}
+                    style={styles.topDecoration}
+                />
+
+                <View style={styles.emptyContainer}>
+                    <View style={styles.emptyIconContainer}>
+                        <Ionicons name="heart-outline" size={70} color="#D4AF37" />
+                    </View>
+                    <Text style={styles.emptyTitle}>Chưa có sách yêu thích</Text>
+                    <Text style={styles.emptyText}>
+                        Thêm sách vào danh sách yêu thích để quản lý bộ sưu tập của bạn
+                    </Text>
+
+                    <TouchableOpacity
+                        style={styles.exploreButton}
+                        onPress={() => navigation.navigate('Trang chủ')}
+                    >
+                        <LinearGradient
+                            colors={['#D4AF37', '#C09B31']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.gradientButton}
+                        >
+                            <Text style={styles.exploreButtonText}>Khám phá sách</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     }
 
     return (
         <View style={styles.container}>
+            <StatusBar barStyle="light-content" />
+            <NotificationComponent />
+            <LinearGradient
+                colors={['rgba(212, 175, 55, 0.3)', 'rgba(212, 175, 55, 0.1)', 'rgba(22, 20, 25, 0)']}
+                style={styles.topDecoration}
+            />
+
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>Sách yêu thích</Text>
+            </View>
+
             <FlatList
                 data={favoriteBooks}
                 renderItem={renderBookItem}
                 keyExtractor={(item) => item._id}
                 numColumns={2}
                 contentContainerStyle={styles.listContainer}
+                ListHeaderComponent={renderHeader}
+                showsVerticalScrollIndicator={false}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={onRefresh}
-                        colors={["#FFD700"]}
+                        tintColor="#D4AF37"
+                        colors={["#D4AF37"]}
+                        progressBackgroundColor="#161419"
                     />
                 }
             />
@@ -197,79 +331,219 @@ function FavoriteScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F5E8C7",
+        backgroundColor: "#161419",
     },
     center: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#F5E8C7",
+        backgroundColor: "#161419",
+        padding: 30,
+    },
+    topDecoration: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 180,
+        zIndex: 0,
+    },
+    header: {
+        paddingTop: 50,
+        paddingBottom: 10,
+        paddingHorizontal: 20,
+        zIndex: 1,
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#F8F0E5",
+    },
+    headerSection: {
+        marginBottom: 20,
+        paddingHorizontal: 15,
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: "bold",
+        color: "#D4AF37",
+        marginBottom: 5,
+    },
+    sectionSubtitle: {
+        fontSize: 14,
+        color: "rgba(248, 240, 229, 0.6)",
     },
     listContainer: {
-        padding: 10,
+        padding: 12,
+        paddingBottom: 80,
     },
     bookCard: {
         flex: 1,
-        margin: 8,
-        backgroundColor: "#FFF8E7",
-        borderRadius: 12,
+        marginBottom: 16,
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        borderRadius: 16,
         overflow: "hidden",
         elevation: 3,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.2,
         shadowRadius: 4,
         position: "relative",
-        transform: [{ scale: 1 }],
+        borderWidth: 1,
+        borderColor: "rgba(212, 175, 55, 0.2)",
+        height: 270,
+        maxWidth: COLUMN_WIDTH,
+    },
+    cardGradient: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
+    bookContent: {
+        flex: 1,
     },
     imageContainer: {
         width: "100%",
-        height: 180,
-        backgroundColor: "#8F6B4A",
-        justifyContent: "center",
-        alignItems: "center",
+        height: 170,
+        backgroundColor: "rgba(33, 31, 36, 0.9)",
+        position: "relative",
+    },
+    imageGradient: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1,
     },
     bookImage: {
         width: "100%",
         height: "100%",
         resizeMode: "cover",
+        zIndex: 2,
     },
     bookInfo: {
-        padding: 10,
+        padding: 12,
+        flex: 1,
+        justifyContent: "space-between",
     },
     bookTitle: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: "bold",
-        color: "#5A4032",
+        color: "#F8F0E5",
         marginBottom: 4,
+        lineHeight: 18,
     },
     bookAuthor: {
-        fontSize: 14,
-        color: "#7A5D3F",
+        fontSize: 12,
+        color: "rgba(248, 240, 229, 0.7)",
+        marginBottom: 6,
     },
-    loadingText: {
-        fontSize: 18,
-        color: "#5A4032",
-        marginTop: 10,
+    bookMetaContainer: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginTop: 6,
     },
-    errorText: {
-        fontSize: 18,
-        color: "#D32F2F",
+    metaItem: {
+        flexDirection: "row",
+        alignItems: "center",
     },
-    emptyText: {
-        fontSize: 18,
-        color: "#5A4032",
-        marginTop: 10,
-        textAlign: "center",
+    metaText: {
+        fontSize: 11,
+        color: "rgba(248, 240, 229, 0.6)",
+        marginLeft: 3,
     },
     removeButton: {
         position: "absolute",
-        right: 8,
-        top: 8,
-        zIndex: 1,
-        backgroundColor: "rgba(255, 255, 255, 0.8)",
-        borderRadius: 12,
-        padding: 4,
+        right: 10,
+        top: 10,
+        zIndex: 10,
+        backgroundColor: "rgba(22, 20, 25, 0.7)",
+        borderRadius: 15,
+        width: 30,
+        height: 30,
+        justifyContent: "center",
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: "rgba(212, 175, 55, 0.3)",
+    },
+    loadingText: {
+        fontSize: 16,
+        color: "#F8F0E5",
+        marginTop: 20,
+        fontWeight: "500",
+    },
+    errorText: {
+        fontSize: 16,
+        color: "#FF5E5E",
+        marginTop: 20,
+        marginBottom: 20,
+        textAlign: "center",
+    },
+    retryButton: {
+        backgroundColor: "rgba(212, 175, 55, 0.2)",
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: "rgba(212, 175, 55, 0.4)",
+    },
+    retryButtonText: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#F8F0E5",
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 30,
+    },
+    emptyIconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: "rgba(212, 175, 55, 0.1)",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: "rgba(212, 175, 55, 0.3)",
+    },
+    emptyTitle: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: "#F8F0E5",
+        marginBottom: 12,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: "rgba(248, 240, 229, 0.6)",
+        textAlign: "center",
+        marginBottom: 30,
+        lineHeight: 24,
+    },
+    exploreButton: {
+        borderRadius: 30,
+        overflow: "hidden",
+        width: "70%",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 8,
+    },
+    gradientButton: {
+        paddingVertical: 15,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    exploreButtonText: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#161419",
     },
 });
 

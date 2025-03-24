@@ -58,75 +58,106 @@ export default function Register() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Let’s get started!</Text>
-            <Text style={styles.subtitle}>Create your account</Text>
+            <View style={styles.backgroundDecoration} />
 
-            <TextInput
-                style={styles.input}
-                placeholder="Username"
-                value={userName}
-                onChangeText={setUsername}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Email"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-            />
+            <View style={styles.headerContainer}>
+                <Text style={styles.title}>Hãy bắt đầu!</Text>
+                <Text style={styles.subtitle}>Tạo tài khoản của bạn</Text>
+            </View>
 
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.inputPassword}
-                    placeholder="Password"
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={setPassword}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.icon}>
-                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="gray" />
+            <View style={styles.formContainer}>
+                <View style={styles.inputOuterContainer}>
+                    <View style={styles.inputIconContainer}>
+                        <Ionicons name="person-outline" size={20} color="#D4AF37" />
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Tên tài khoản"
+                        placeholderTextColor="rgba(248, 240, 229, 0.4)"
+                        value={userName}
+                        onChangeText={setUsername}
+                    />
+                </View>
+
+                <View style={styles.inputOuterContainer}>
+                    <View style={styles.inputIconContainer}>
+                        <Ionicons name="mail-outline" size={20} color="#D4AF37" />
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Email"
+                        placeholderTextColor="rgba(248, 240, 229, 0.4)"
+                        keyboardType="email-address"
+                        value={email}
+                        onChangeText={setEmail}
+                    />
+                </View>
+
+                <View style={styles.inputOuterContainer}>
+                    <View style={styles.inputIconContainer}>
+                        <Ionicons name="lock-closed-outline" size={20} color="#D4AF37" />
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Mật khẩu"
+                        placeholderTextColor="rgba(248, 240, 229, 0.4)"
+                        secureTextEntry={!showPassword}
+                        value={password}
+                        onChangeText={setPassword}
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.icon}>
+                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#D4AF37" />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.inputOuterContainer}>
+                    <View style={styles.inputIconContainer}>
+                        <Ionicons name="shield-checkmark-outline" size={20} color="#D4AF37" />
+                    </View>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Xác nhận mật khẩu"
+                        placeholderTextColor="rgba(248, 240, 229, 0.4)"
+                        secureTextEntry={!showConfirmPassword}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                    />
+                    <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.icon}>
+                        <Ionicons name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#D4AF37" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            <View style={styles.actionsContainer}>
+                <Text style={styles.agreement}>
+                    Bằng cách tạo tài khoản hoặc tiếp tục với Google, bạn đồng ý với{' '}
+                    <Text style={styles.link}>Điều khoản dịch vụ</Text> và <Text style={styles.link}>Chính sách bảo mật</Text>.
+                </Text>
+
+                <TouchableOpacity style={styles.createAccountButton} onPress={handleRegister}>
+                    <Text style={styles.createAccountText}>Tạo tài khoản</Text>
+                </TouchableOpacity>
+
+                <View style={styles.dividerContainer}>
+                    <View style={styles.divider} />
+                    <Text style={styles.orText}>HOẶC</Text>
+                    <View style={styles.divider} />
+                </View>
+
+                <TouchableOpacity style={styles.googleButton}>
+                    <Ionicons name="logo-google" size={20} color="#D4AF37" />
+                    <Text style={styles.googleButtonText}>Đăng nhập với Google</Text>
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.inputPassword}
-                    placeholder="Confirm Password"
-                    secureTextEntry={!showConfirmPassword}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                />
-                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.icon}>
-                    <Ionicons name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} size={20} color="gray" />
-                </TouchableOpacity>
+            <View style={styles.footerContainer}>
+                <Text style={styles.footerText}>
+                    Đã có tài khoản?{' '}
+                    <TouchableOpacity onPress={() => navigation.navigate('Đăng nhập')}>
+                        <Text style={styles.link}>Đăng nhập</Text>
+                    </TouchableOpacity>
+                </Text>
             </View>
-
-            <Text style={styles.agreement}>
-                By creating your account or continuing with Google, you agree to our{' '}
-                <Text style={styles.link}>Terms and Conditions</Text> and <Text style={styles.link}>Privacy Policy</Text>.
-            </Text>
-
-            <TouchableOpacity style={styles.createAccountButton} onPress={handleRegister}>
-                <Text style={styles.createAccountText}>Create account</Text>
-            </TouchableOpacity>
-
-            <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <Text style={styles.orText}>OR</Text>
-                <View style={styles.divider} />
-            </View>
-
-            <TouchableOpacity style={styles.googleButton}>
-                <Ionicons name="logo-google" size={20} color="#000" />
-                <Text style={styles.googleButtonText}>Sign In with Google</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.footerText}>
-                Already have an account?{' '}
-                <TouchableOpacity onPress={() => navigation.navigate('Đăng nhập')}>
-                    <Text style={styles.link}>Sign in</Text>
-                </TouchableOpacity>
-            </Text>
         </View>
     );
 }
@@ -134,41 +165,78 @@ export default function Register() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#C4A484',
+        backgroundColor: '#161419',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
+        justifyContent: 'flex-start',
+        padding: 0,
     },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
-        marginBottom: 5,
+    backgroundDecoration: {
+        position: 'absolute',
+        top: -200,
+        left: -150,
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        backgroundColor: '#D4AF37',
+        opacity: 0.03,
     },
-    subtitle: {
-        fontSize: 16,
-        color: '#fff',
+    headerContainer: {
+        width: '100%',
+        alignItems: 'center',
+        paddingTop: 140,
+        paddingBottom: 30,
+    },
+    formContainer: {
+        width: '85%',
         marginBottom: 20,
     },
-    input: {
-        width: '100%',
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 15,
-        fontSize: 14,
+    actionsContainer: {
+        width: '85%',
+        alignItems: 'center',
     },
-    inputContainer: {
+    footerContainer: {
         width: '100%',
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 20,
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#F8F0E5',
+        marginBottom: 10,
+        letterSpacing: 1,
+        textShadowColor: "rgba(0, 0, 0, 0.2)",
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
+    },
+    subtitle: {
+        fontSize: 18,
+        color: '#F8F0E5',
+        marginBottom: 10,
+        opacity: 0.8,
+    },
+    inputOuterContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 18,
         position: 'relative',
-        marginBottom: 15,
     },
-    inputPassword: {
-        width: '100%',
-        backgroundColor: '#fff',
-        borderRadius: 10,
+    inputIconContainer: {
+        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+        borderRadius: 12,
+        padding: 10,
+        marginRight: 10,
+    },
+    input: {
+        flex: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        borderRadius: 15,
         padding: 15,
-        fontSize: 14,
+        fontSize: 15,
+        color: '#F8F0E5',
+        borderWidth: 1,
+        borderColor: 'rgba(212, 175, 55, 0.2)',
     },
     icon: {
         position: 'absolute',
@@ -177,59 +245,74 @@ const styles = StyleSheet.create({
     },
     agreement: {
         fontSize: 12,
-        color: '#fff',
+        color: '#F8F0E5',
         textAlign: 'center',
-        marginBottom: 20,
+        marginBottom: 17,
+        opacity: 0.6,
+        lineHeight: 18,
     },
     link: {
         fontWeight: 'bold',
         textDecorationLine: 'underline',
+        color: '#D4AF37',
     },
     createAccountButton: {
-        backgroundColor: '#000',
+        backgroundColor: '#D4AF37',
         width: '100%',
-        padding: 15,
-        borderRadius: 10,
+        padding: 18,
+        borderRadius: 30,
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 25,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 8,
     },
     createAccountText: {
-        color: '#fff',
-        fontSize: 16,
+        color: '#161419',
+        fontSize: 17,
         fontWeight: 'bold',
+        letterSpacing: 1,
     },
     dividerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         width: '100%',
-        marginBottom: 20,
+        marginBottom: 25,
     },
     divider: {
         flex: 1,
         height: 1,
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(212, 175, 55, 0.15)',
     },
     orText: {
-        marginHorizontal: 10,
-        color: '#fff',
+        marginHorizontal: 15,
+        color: '#F8F0E5',
+        opacity: 0.6,
     },
     googleButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         width: '100%',
-        padding: 15,
-        borderRadius: 10,
+        padding: 16,
+        borderRadius: 30,
         justifyContent: 'center',
-        marginBottom: 20,
+        marginBottom: 30,
+        borderWidth: 1,
+        borderColor: 'rgba(212, 175, 55, 0.3)',
     },
     googleButtonText: {
         marginLeft: 10,
-        fontSize: 14,
-        color: '#000',
+        fontSize: 16,
+        color: '#F8F0E5',
+        fontWeight: '500',
     },
     footerText: {
-        color: '#fff',
+        color: '#F8F0E5',
         fontSize: 14,
+        opacity: 0.8,
+        textAlign: 'center',
     },
 });
