@@ -1,0 +1,15 @@
+plugins {
+    id("com.google.gms.google-services") version "4.4.0" apply false
+}
+
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:32.7.1"))
+    implementation 'com.github.mrousavy:react-native-vision-camera:4.0.2'
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+    }
+}
